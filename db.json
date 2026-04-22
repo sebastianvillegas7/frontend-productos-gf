@@ -1,0 +1,92 @@
+{
+  "categories": [
+    {
+      "name": "Ropa",
+      "description": "Indumentaria deportiva y casual.",
+      "color": "#3B82F6",
+      "id": "1"
+    },
+    {
+      "id": "2",
+      "name": "Calzado",
+      "description": "Zapatos, zapatillas y sandalias.",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "2",
+      "name": "Calzado",
+      "description": "Zapatos, zapatillas y sandalias.",
+      "color": "#3B82F6"
+    },
+    {
+      "id": "3",
+      "name": "Accesorios",
+      "description": "Mochilas, medias, gorras y más.",
+      "color": "#F97316"
+    },
+    {
+      "id": "4",
+      "name": "Equipamiento",
+      "description": "Elementos y equipos para entrenamiento.",
+      "color": "#22C55E"
+    },
+    {
+      "name": "nueva categoria",
+      "description": "es una descripcion",
+      "color": "#EF4444",
+      "id": "1neauutGvGk"
+    },
+    {
+      "name": "Categoria2",
+      "description": "Categoria rapida",
+      "color": "#A855F7",
+      "id": "rgFY37W-8S4"
+    }
+  ],
+  "products": [
+    {
+      "name": "Zapatillas Nike Air Max",
+      "description": "1234",
+      "price": 89999,
+      "stock": 42,
+      "categoryId": 1,
+      "id": "1"
+    },
+    {
+      "id": "2",
+      "name": "Remera Adidas Clásica",
+      "price": 12500,
+      "stock": 5,
+      "categoryId": 1
+    },
+    {
+      "id": "3",
+      "name": "Mochila Puma Pro",
+      "price": 34990,
+      "stock": 0,
+      "categoryId": 3
+    },
+    {
+      "id": "4",
+      "name": "Buzo Under Armour",
+      "price": 47500,
+      "stock": 18,
+      "categoryId": 1
+    },
+    {
+      "id": "5",
+      "name": "Medias Reebok x3",
+      "price": 5990,
+      "stock": 120,
+      "categoryId": 3
+    },
+    {
+      "name": "Pelota de Fútbol ",
+      "price": 22000,
+      "stock": 9,
+      "categoryId": 4,
+      "id": "6"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

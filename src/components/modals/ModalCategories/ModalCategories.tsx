@@ -1,0 +1,161 @@
+import { useState, type SyntheticEvent } from "react";
+import type { ICategory } from "../../../types/ICategorie";
+import { useForm } from "../../../hooks/useForm";
+
+type IColor = {
+  label: string;
+  value: string;
+};
+
+const colorOptions: IColor[] = [
+  { label: "Azul", value: "#3B82F6" },
+  { label: "Verde", value: "#22C55E" },
+  { label: "Rojo", value: "#EF4444" },
+  { label: "Naranja", value: "#F97316" },
+  { label: "Violeta", value: "#A855F7" },
+  { label: "Rosa", value: "#EC4899" },
+];
+
+type CategoryFormState = {
+  name: string;
+  description: string;
+};
+
+type Props = {
+  categoryActive: ICategory | null;
+  handleCloseModal: VoidFunction;
+  handleCreate?: (category: Omit<ICategory, "id">) => void;
+};
+
+export const CategoryModal = ({
+  categoryActive,
+  handleCloseModal,
+  handleCreate,
+}: Props) => {
+  const initialColor =
+    colorOptions.find((c) => c.value === categoryActive?.color) ??
+    colorOptions[0];
+  const [tagColor, setTagColor] = useState<IColor>(initialColor);
+
+  const { formState, handleChange } = useForm<CategoryFormState>({
+    name: categoryActive?.name ?? "",
+    description: categoryActive?.description ?? "",
+  });
+
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const categoryData: Omit<ICategory, "id"> = {
+      name: formState.name,
+      description: formState.description,
+      color: tagColor.value,
+    };
+    if (categoryActive) {
+    } else {
+      if (handleCreate) handleCreate(categoryData);
+    }
+    handleCloseModal();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">
+            {categoryActive ? "Editar categoría" : "Nueva categoría"}
+          </h2>
+          <button
+            className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            onClick={handleCloseModal}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} id="category-form">
+          <div className="px-6 py-5 space-y-5">
+            {/* Nombre */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-600">
+                Nombre
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formState.name}
+                onChange={handleChange}
+                placeholder="Nombre de la categoría"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Descripción */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-600">
+                Descripción
+              </label>
+              <textarea
+                name="description"
+                value={formState.description}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Breve descripción de la categoría"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Color */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-600">
+                Color de etiqueta
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {colorOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    title={opt.label}
+                    onClick={() => setTagColor(opt)}
+                    style={{ backgroundColor: opt.value }}
+                    className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ring-2 ring-offset-2 ${
+                      tagColor.value === opt.value
+                        ? "ring-gray-600"
+                        : "ring-transparent"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-400">Vista previa:</span>
+                <span
+                  style={{ backgroundColor: tagColor.value }}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white"
+                >
+                  {formState.name || "Categoría"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <button
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+            onClick={handleCloseModal}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            form="category-form"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {categoryActive ? "Guardar cambios" : "Crear categoría"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
