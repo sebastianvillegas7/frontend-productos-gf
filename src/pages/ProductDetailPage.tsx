@@ -1,43 +1,28 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import type { IProduct } from "../types/IProduct";
-import type { ICategory } from "../types/ICategorie";
 import { getProductsById } from "../api/product.service";
-import { getCategories } from "../api/categories.service";
 
 export const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-
-  const [product, setProduct] = useState<IProduct | null>(null);
-
-  const [categories, setCategories] = useState<ICategory[]>([]);
-
-  const getData = async (id: string) => {
-    try {
-      const product = await getProductsById(id);
-      setProduct(product);
-      const categories = await getCategories();
-      setCategories(categories);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    if (id) {
-      getData(id);
-    }
-  }, []);
-
   const navigate = useNavigate();
 
-  if (!product) return <h1>No existe el producto</h1>;
+  const {
+    data: product,
+    isLoading,
+    isError,
+  } = useQuery<IProduct>({
+    queryKey: ["product-detail", id],
+    queryFn: () => getProductsById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const category = categories.find((c) => c.id === `${product?.categoryId}`);
+  if (isLoading) return <p>Cargando producto...</p>;
+  if (isError || !product) return <p>No se pudo cargar el producto.</p>;
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-6">
-      {/* Encabezado */}
+    <div className="w-full max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate("/")}
@@ -49,23 +34,22 @@ export const ProductDetailPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
       </div>
 
-      {/* Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6 flex flex-col gap-5">
-        {/* Categoría */}
-        {category && (
-          <div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6 flex flex-col gap-6">
+        <div className="flex flex-wrap gap-2">
+          {product.categories.map((item) => (
             <span
-              style={{ backgroundColor: category.color }}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+              key={`detail-cat-${item.categoria.id}`}
+              style={{ backgroundColor: item.categoria.color || "#E5E7EB" }}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-gray-800"
             >
-              {category.name}
+              {item.categoria.name}
+              {item.es_principal ? " ★ principal" : ""}
             </span>
-          </div>
-        )}
+          ))}
+        </div>
 
         <hr className="border-gray-100" />
 
-        {/* Descripción */}
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
             Descripción
@@ -75,8 +59,7 @@ export const ProductDetailPage = () => {
           </p>
         </div>
 
-        {/* Precio y Stock */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
               Precio
@@ -85,21 +68,56 @@ export const ProductDetailPage = () => {
               ${product.price.toLocaleString("es-AR")}
             </span>
           </div>
+
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
               Stock
             </span>
+            <span className="text-sm text-gray-700">
+              {product.stock} unidades
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Estado
+            </span>
             <span
               className={`inline-flex items-center w-fit px-2.5 py-1 rounded-full text-xs font-semibold ${
-                product.stock === 0
-                  ? "bg-red-100 text-red-700"
-                  : product.stock <= 5
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
+                product.available
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
               }`}
             >
-              {product.stock === 0 ? "Sin stock" : `${product.stock} unidades`}
+              {product.available ? "Disponible" : "No disponible"}
             </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            Ingredientes
+          </span>
+
+          <div className="flex flex-wrap gap-2">
+            {product.ingredients.length > 0 ? (
+              product.ingredients.map((item) => (
+                <span
+                  key={`detail-ing-${item.ingrediente.id}`}
+                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                    item.ingrediente.isAllergen
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {item.ingrediente.name}
+                  {item.ingrediente.isAllergen ? " • alérgeno" : ""}
+                  {item.es_removible ? " • removible" : ""}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-gray-500">Sin ingredientes</span>
+            )}
           </div>
         </div>
       </div>

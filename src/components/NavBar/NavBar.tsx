@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 const navLinks = [
   { label: "Productos", href: "/" },
   { label: "Categorías", href: "/categories" },
+  { label: "Ingredientes", href: "/ingredients" }, 
 ];
 
 export const NavBar = () => {

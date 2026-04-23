@@ -1,25 +1,33 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { StockBadge } from "../components/StockBadge/StockBadge";
-import type { IProduct } from "../types/IProduct";
-import type { ICategory } from "../types/ICategorie";
-import { createProduct, getProducts, updateProduct } from "../api/product.service";
+import type { IProduct, IProductPayload } from "../types/IProduct";
+import {
+  createProduct,
+  deleteProduct,
+  getProducts,
+  updateProduct,
+} from "../api/product.service";
 import { getCategories } from "../api/categories.service";
 import { ProductModal } from "../components/modals/ModalProducts/ModalProducts";
+import type { ICategory } from "../types/ICategorie";
+import type { IIngredient } from "../types/IIngredient";
+import { getIngredients } from "../api/ingredients.service";
 
 export const ProductsPage = () => {
-  //estados
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [categories, setCategories] = useState<ICategory[]>([]);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [productActive, setProductActive] = useState<IProduct | null>(null);
   const [openModal, setOpenModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>("");
-  //hooks
-  const navigate = useNavigate();
-  
+  const [productToDelete, setProductToDelete] = useState<IProduct | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
-  //funcionalidades
   const handleCloseModal = () => {
     setOpenModal(false);
     setProductActive(null);
@@ -30,69 +38,103 @@ export const ProductsPage = () => {
     setOpenModal(true);
   };
 
-  //========CREATE======
-  const handleCreate = async (newProduct: Omit<IProduct,"id">)=>{
-    try {
-      const data = await createProduct(newProduct);
-      //la correcta
-      setProducts((prev) => [...prev, data]); //[todos los productos cargados, nuevo producto]
-      //la incorrecta
-      //creo el producto
-      //fetchProducts()
-    } catch (error) {
-      setError("Hubo un error al crear")
+  const handleCloseDeleteModal = () => {
+    setProductToDelete(null);
+    setDeleteError("");
+  };
 
-    }
+  const {
+    data: products = [],
+    isLoading: isLoadingProducts,
+    isError: isErrorProducts,
+  } = useQuery<IProduct[]>({
+    queryKey: ["products"],
+    queryFn: getProducts,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const {
+    data: categories = [],
+    isLoading: isLoadingCategories,
+    isError: isErrorCategories,
+  } = useQuery<ICategory[]>({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const {
+    data: ingredients = [],
+    isLoading: isLoadingIngredients,
+    isError: isErrorIngredients,
+  } = useQuery<IIngredient[]>({
+    queryKey: ["ingredients"],
+    queryFn: getIngredients,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      handleCloseModal();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      product,
+    }: {
+      id: string;
+      product: IProductPayload;
+    }) => updateProduct(id, product),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      handleCloseModal();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      handleCloseDeleteModal();
+    },
+    onError: (error: Error) => {
+      setDeleteError(error.message || "No se pudo eliminar el producto.");
+    },
+  });
+
+  const handleCreate = async (newProduct: IProductPayload) => {
+    await createMutation.mutateAsync(newProduct);
+  };
+
+  const handleUpdate = async (id: string, newProduct: IProductPayload) => {
+    await updateMutation.mutateAsync({ id, product: newProduct });
+  };
+
+  const handleDeleteClick = (product: IProduct) => {
+    setDeleteError("");
+    setProductToDelete(product);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!productToDelete) return;
+    deleteMutation.mutate(productToDelete.id);
+  };
+
+  if (isLoadingProducts || isLoadingCategories || isLoadingIngredients) {
+    return <p>Cargando productos...</p>;
   }
 
-  //=======UPDATE
-  const handleUpdate = async (id:string,newProduct: Omit<IProduct, "id">) => {
-    //const statePrevious = products; //estado de state
-    try {
-      const data = await updateProduct(id, newProduct);
-      //[1,2,3,4,5,nuevoElemento, 8 9,]
-      const updatedProductos = products.map((product)=>{
-        if(product.id === id){
-          return data; /// del elemento del array actuale las props
-        }else{
-          return product
-        }
-      })
-      setProducts(updatedProductos);
-    } catch (error) {
-      //setProducts(statePrevious);
-      setError("Hubo un error al crear");
-    }
-  };
-
-  //carga inicial al final de la logica
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      //promiseAll
-      const allProducts = await getProducts();
-      setProducts(allProducts);
-      const allCategories = await getCategories();
-      setCategories(allCategories);
-    } catch (error) {
-      setError("Hubo un error en la llamada intenta nuevamente");
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  if (loading) return <p>Cargando productos</p>;
-  if (error) return <p>{error}</p>;
+  if (isErrorProducts || isErrorCategories || isErrorIngredients) {
+    return <p>Hubo un error al cargar los datos.</p>;
+  }
 
   return (
     <>
-      <div className="w-full max-w-4xl mx-auto px-4 py-6">
-        {/* Encabezado */}
+      <div className="w-full max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
@@ -100,6 +142,7 @@ export const ProductsPage = () => {
               {products.length} productos en total
             </p>
           </div>
+
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -109,58 +152,100 @@ export const ProductsPage = () => {
           </button>
         </div>
 
-        {/* Barra de búsqueda */}
-        <div className="mb-4">
-          <input
-            type="text"
-            // TODO: value={search} onChange={...}
-            placeholder="Buscar producto..."
-            className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-          />
-        </div>
-
-        {/* Tabla */}
         <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                 <th className="px-4 py-3 text-left font-medium">Producto</th>
-                <th className="px-4 py-3 text-left font-medium">Categoría</th>
+                <th className="px-4 py-3 text-left font-medium">Categorías</th>
+                <th className="px-4 py-3 text-left font-medium">Ingredientes</th>
                 <th className="px-4 py-3 text-right font-medium">Precio</th>
                 <th className="px-4 py-3 text-center font-medium">Stock</th>
+                <th className="px-4 py-3 text-center font-medium">Estado</th>
                 <th className="px-4 py-3 text-center font-medium">Acciones</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-100 bg-white">
               {products.map((product) => (
                 <tr
                   key={product.id}
                   className="hover:bg-blue-50/40 transition-colors"
                 >
-                  {/* Producto */}
                   <td className="px-4 py-3">
-                    <span className="font-medium text-gray-800">
-                      {product.name}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-800">
+                        {product.name}
+                      </span>
+                      <span className="text-xs text-gray-500 truncate max-w-[220px]">
+                        {product.description || "Sin descripción"}
+                      </span>
+                    </div>
                   </td>
 
-                  {/* Categoría */}
-                  <td className="px-4 py-3 text-gray-500">
-                    {categories.find((c) => c.id == product.categoryId)?.name ??
-                      "—"}
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {product.categories.length > 0 ? (
+                        product.categories.map((item) => (
+                          <span
+                            key={`${product.id}-cat-${item.categoria.id}`}
+                            style={{
+                              backgroundColor: item.categoria.color || "#E5E7EB",
+                            }}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-gray-800"
+                          >
+                            {item.categoria.name}
+                            {item.es_principal ? " ★" : ""}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </div>
                   </td>
 
-                  {/* Precio */}
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {product.ingredients.length > 0 ? (
+                        product.ingredients.map((item) => (
+                          <span
+                            key={`${product.id}-ing-${item.ingrediente.id}`}
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              item.ingrediente.isAllergen
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {item.ingrediente.name}
+                            {item.es_removible ? " (removible)" : ""}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="px-4 py-3 text-right font-medium text-gray-800">
                     ${product.price.toLocaleString("es-AR")}
                   </td>
 
-                  {/* Stock */}
                   <td className="px-4 py-3 text-center">
                     <StockBadge stock={product.stock} />
                   </td>
 
-                  {/* Acciones */}
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        product.available
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {product.available ? "Disponible" : "No disponible"}
+                    </span>
+                  </td>
+
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
                       <button
@@ -169,13 +254,18 @@ export const ProductsPage = () => {
                       >
                         Ver
                       </button>
+
                       <button
                         onClick={() => handleOpenModal(product)}
                         className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                       >
                         Editar
                       </button>
-                      <button className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+
+                      <button
+                        onClick={() => handleDeleteClick(product)}
+                        className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      >
                         Eliminar
                       </button>
                     </div>
@@ -185,7 +275,6 @@ export const ProductsPage = () => {
             </tbody>
           </table>
 
-          {/* Empty state */}
           {products.length === 0 && (
             <div className="py-16 text-center text-gray-400">
               <p className="text-4xl mb-3">📦</p>
@@ -199,14 +288,63 @@ export const ProductsPage = () => {
           )}
         </div>
       </div>
+
       {openModal && (
         <ProductModal
           handleCloseModal={handleCloseModal}
           productActive={productActive}
           categories={categories}
+          ingredients={ingredients}
           handleCreate={handleCreate}
           handleUpdate={handleUpdate}
         />
+      )}
+
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Confirmar eliminación
+              </h2>
+              <button
+                onClick={handleCloseDeleteModal}
+                className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700">
+                ¿Seguro que querés eliminar el producto{" "}
+                <span className="font-semibold">"{productToDelete.name}"</span>?
+              </p>
+
+              {deleteError && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {deleteError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={handleCloseDeleteModal}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

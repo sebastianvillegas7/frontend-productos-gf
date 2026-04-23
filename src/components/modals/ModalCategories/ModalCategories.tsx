@@ -36,6 +36,7 @@ export const CategoryModal = ({
     colorOptions.find((c) => c.value === categoryActive?.color) ??
     colorOptions[0];
   const [tagColor, setTagColor] = useState<IColor>(initialColor);
+  const [error, setError] = useState("");
 
   const { formState, handleChange } = useForm<CategoryFormState>({
     name: categoryActive?.name ?? "",
@@ -44,15 +45,27 @@ export const CategoryModal = ({
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
+
+    // Validaciones
+    if (!formState.name.trim()) {
+      setError("El nombre es obligatorio");
+      return;
+    }
+
+    if (!formState.description.trim()) {
+      setError("La descripción es obligatoria");
+      return;
+    }
+
     const categoryData: Omit<ICategory, "id"> = {
       name: formState.name,
       description: formState.description,
       color: tagColor.value,
     };
-    if (categoryActive) {
-    } else {
-      if (handleCreate) handleCreate(categoryData);
-    }
+
+    if (handleCreate) handleCreate(categoryData);
+
     handleCloseModal();
   };
 
@@ -75,6 +88,13 @@ export const CategoryModal = ({
         {/* Body */}
         <form onSubmit={handleSubmit} id="category-form">
           <div className="px-6 py-5 space-y-5">
+            {/* Error */}
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
             {/* Nombre */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-600">
