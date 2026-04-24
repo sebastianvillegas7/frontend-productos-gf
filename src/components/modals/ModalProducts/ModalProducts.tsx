@@ -26,6 +26,7 @@ export const ProductModal = ({
   const [stock, setStock] = useState(productActive ? String(productActive.stock) : "");
   const [available, setAvailable] = useState(productActive?.available ?? true);
   const [submitError, setSubmitError] = useState("");
+  const [imageUrl, setImageUrl] = useState(productActive?.images?.[0] ?? "");
 
   const [selectedCategories, setSelectedCategories] = useState<
     { categoria_id: string; es_principal: boolean }[]
@@ -123,7 +124,7 @@ export const ProductModal = ({
       name,
       description,
       price: Number(price),
-      images: [],
+      images: imageUrl ? [imageUrl] : [],
       stock: Number(stock),
       available,
       categories: selectedCategories,
@@ -232,6 +233,19 @@ export const ProductModal = ({
                 rows={3}
                 placeholder="Descripción del producto"
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-600">
+                URL de imagen
+              </label>
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
               />
             </div>
 

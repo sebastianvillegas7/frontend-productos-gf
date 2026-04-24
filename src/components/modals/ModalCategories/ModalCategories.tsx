@@ -23,12 +23,14 @@ type CategoryFormState = {
 
 type Props = {
   categoryActive: ICategory | null;
+  categories: ICategory[];
   handleCloseModal: VoidFunction;
   handleCreate?: (category: Omit<ICategory, "id">) => void;
 };
 
 export const CategoryModal = ({
   categoryActive,
+  categories,
   handleCloseModal,
   handleCreate,
 }: Props) => {
@@ -37,6 +39,8 @@ export const CategoryModal = ({
     colorOptions[0];
   const [tagColor, setTagColor] = useState<IColor>(initialColor);
   const [error, setError] = useState("");
+  const [parentId, setParentId] = useState<string>(categoryActive?.parentId ?? "",);
+  const [imageUrl, setImageUrl] = useState(categoryActive?.imageUrl ?? "");
 
   const { formState, handleChange } = useForm<CategoryFormState>({
     name: categoryActive?.name ?? "",
@@ -62,6 +66,8 @@ export const CategoryModal = ({
       name: formState.name,
       description: formState.description,
       color: tagColor.value,
+      parentId: parentId || null,
+      imageUrl: imageUrl || null,
     };
 
     if (handleCreate) handleCreate(categoryData);
@@ -123,6 +129,47 @@ export const CategoryModal = ({
                 placeholder="Breve descripción de la categoría"
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            {/* URL de imagen */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-600">
+                URL de imagen
+              </label>
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+              />
+            </div>
+
+            {/* Categoría padre */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-600">
+                Categoría padre
+              </label>
+
+              <select
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Sin categoría padre</option>
+
+                {categories
+                  .filter((category) => category.id !== categoryActive?.id)
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+              </select>
+
+              <p className="text-xs text-gray-400">
+                Si no seleccionás una, será una categoría raíz.
+              </p>
             </div>
 
             {/* Color */}

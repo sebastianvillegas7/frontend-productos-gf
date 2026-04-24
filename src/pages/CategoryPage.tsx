@@ -118,9 +118,11 @@ export const CategoryPage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                <th className="px-4 py-3 text-left font-medium">Imágen</th>
                 <th className="px-4 py-3 text-left font-medium">Nombre</th>
                 <th className="px-4 py-3 text-left font-medium">Descripción</th>
                 <th className="px-4 py-3 text-center font-medium">Color</th>
+                <th className="px-4 py-3 text-left font-medium">Padre</th>
                 <th className="px-4 py-3 text-center font-medium">Acciones</th>
               </tr>
             </thead>
@@ -131,6 +133,14 @@ export const CategoryPage = () => {
                   key={category.id}
                   className="hover:bg-blue-50/40 transition-colors"
                 >
+                  <td className="px-4 py-3">
+                    <img
+                      src={category.imageUrl ?? undefined}
+                      alt=""
+                      className="w-10 h-10 object-cover rounded"
+                    />
+                  </td>
+
                   <td className="px-4 py-3">
                     <span
                       style={{ backgroundColor: category.color || "#E5E7EB" }}
@@ -154,6 +164,10 @@ export const CategoryPage = () => {
                         {category.color || "Sin color"}
                       </span>
                     </div>
+                  </td>
+
+                  <td className="px-4 py-3 text-gray-500">
+                    {categories.find((cat) => cat.id === category.parentId)?.name ?? "—"}
                   </td>
 
                   <td className="px-4 py-3">
@@ -202,6 +216,7 @@ export const CategoryPage = () => {
       {modal.type === "edit" && (
         <CategoryModal
           categoryActive={modal.category}
+          categories={categories}
           handleCreate={(data) =>
             editMutation.mutate({
               id: modal.category.id,
@@ -215,6 +230,7 @@ export const CategoryPage = () => {
       {modal.type === "create" && (
         <CategoryModal
           categoryActive={null}
+          categories={categories}
           handleCreate={(data) => createMutation.mutate(data)}
           handleCloseModal={handleCloseModal}
         />
@@ -223,6 +239,7 @@ export const CategoryPage = () => {
       {modal.type === "detail" && (
         <CategoryDetailModal
           category={modal.category}
+          categories={categories}
           handleCloseModal={handleCloseModal}
         />
       )}

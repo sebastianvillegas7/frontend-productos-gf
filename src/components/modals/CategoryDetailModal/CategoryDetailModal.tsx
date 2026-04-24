@@ -2,10 +2,12 @@ import type { ICategory } from "../../../types/ICategorie";
 
 type Props = {
   category: ICategory;
+  categories: ICategory[];
   handleCloseModal: VoidFunction;
 };
 
-export const CategoryDetailModal = ({ category, handleCloseModal }: Props) => {
+export const CategoryDetailModal = ({ category, categories, handleCloseModal }: Props) => {
+  const parent = categories.find(c => c.id === category.parentId);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -32,12 +34,34 @@ export const CategoryDetailModal = ({ category, handleCloseModal }: Props) => {
             </span>
           </div>
 
+          {category.imageUrl && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Imagen
+              </span>
+              <img
+                src={category.imageUrl}
+                alt={category.name}
+                className="w-full h-40 object-cover rounded-xl border border-gray-200"
+              />
+            </div>
+          )}
+
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
               Descripción
             </span>
             <p className="text-sm text-gray-700 leading-relaxed">
               {category.description || "Sin descripción"}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Categoría padre
+            </span>
+            <p className="text-sm text-gray-700">
+              {parent ? parent.name : "Sin categoría padre"}
             </p>
           </div>
 
@@ -64,14 +88,6 @@ export const CategoryDetailModal = ({ category, handleCloseModal }: Props) => {
             className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Cerrar
-          </button>
-          <button
-            onClick={() => {
-              handleCloseModal();
-            }}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Editar
           </button>
         </div>
       </div>

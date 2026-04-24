@@ -8,6 +8,7 @@ type CategoryApi = {
   descripcion: string;
   color: string | null;
   imagen_url: string;
+  parent_id: number | null;
 };
 
 type CategoriesApiResponse = {
@@ -20,13 +21,16 @@ const mapCategoryFromApi = (category: CategoryApi): ICategory => ({
   name: category.nombre,
   description: category.descripcion,
   color: category.color ?? "",
+  parentId: category.parent_id ? String(category.parent_id) : null,
+  imageUrl: category.imagen_url || null,
 });
 
 const mapCategoryToApi = (category: Omit<ICategory, "id">) => ({
   nombre: category.name,
   descripcion: category.description,
   color: category.color || null,
-  imagen_url: "",
+  imagen_url: category.imageUrl || "",
+  parent_id: category.parentId ? Number(category.parentId) : null,
 });
 
 export const getCategories = async (): Promise<ICategory[]> => {

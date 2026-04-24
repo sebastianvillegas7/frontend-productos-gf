@@ -3,4 +3,6 @@ export interface ICategory {
   name: string;
   description: string;
   color: string;
+  parentId: string | null;
+  imageUrl: string | null;
 }

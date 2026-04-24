@@ -134,7 +134,7 @@ export const ProductsPage = () => {
 
   return (
     <>
-      <div className="w-full max-w-6xl mx-auto px-4 py-6">
+      <div className="w-full max-w-[1400px] mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
@@ -156,6 +156,7 @@ export const ProductsPage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                <th className="px-4 py-3 text-left font-medium">Imagen</th>
                 <th className="px-4 py-3 text-left font-medium">Producto</th>
                 <th className="px-4 py-3 text-left font-medium">Categorías</th>
                 <th className="px-4 py-3 text-left font-medium">Ingredientes</th>
@@ -173,18 +174,32 @@ export const ProductsPage = () => {
                   className="hover:bg-blue-50/40 transition-colors"
                 >
                   <td className="px-4 py-3">
+                    {product.images?.[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                        —
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-3">
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-800">
                         {product.name}
                       </span>
-                      <span className="text-xs text-gray-500 truncate max-w-[220px]">
+                      <span className="text-xs text-gray-500 truncate max-w-[280px]">
                         {product.description || "Sin descripción"}
                       </span>
                     </div>
                   </td>
 
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 max-w-[220px]">
                       {product.categories.length > 0 ? (
                         product.categories.map((item) => (
                           <span
@@ -205,7 +220,7 @@ export const ProductsPage = () => {
                   </td>
 
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 max-w-[220px]">
                       {product.ingredients.length > 0 ? (
                         product.ingredients.map((item) => (
                           <span

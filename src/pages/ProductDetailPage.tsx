@@ -92,6 +92,16 @@ export const ProductDetailPage = () => {
               {product.available ? "Disponible" : "No disponible"}
             </span>
           </div>
+
+          {product.images?.[0] && (
+            <div className="mb-6">
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="w-full max-h-64 object-cover rounded-xl border border-gray-200"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
